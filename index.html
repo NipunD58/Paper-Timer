@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Countdown to 15 Feb 2025</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .countdown {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        .time-unit {
+            display: inline-block;
+            margin: 1rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            min-width: 120px;
+            transition: transform 0.3s ease;
+        }
+        .time-unit:hover {
+            transform: translateY(-5px);
+        }
+        .number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .label {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .timezone {
+            margin-top: 2rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+        .next-update {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .time-unit.changed {
+            animation: pulse 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="countdown">
+        <h1>Countdown to 15 Feb 2025</h1>
+        <div class="time-unit">
+            <div class="number" id="days">0</div>
+            <div class="label">days</div>
+        </div>
+        <div class="time-unit">
+            <div class="number" id="hours">0</div>
+            <div class="label">hours</div>
+        </div>
+        <div class="time-unit">
+            <div class="number" id="minutes">0</div>
+            <div class="label">minutes</div>
+        </div>
+        <div class="time-unit">
+            <div class="number" id="seconds">0</div>
+            <div class="label">seconds</div>
+        </div>
+        <div class="timezone">Indian Standard Time (IST)</div>
+        <div class="next-update" id="nextUpdate"></div>
+    </div>
+
+    <script>
+        function addPulseAnimation(elementId, newValue, oldValue) {
+            if (newValue !== oldValue) {
+                const element = document.getElementById(elementId).parentElement;
+                element.classList.add('changed');
+                setTimeout(() => {
+                    element.classList.remove('changed');
+                }, 500);
+            }
+        }
+
+        function updateNextMessageTime() {
+            const now = new Date();
+            const next = new Date();
+            next.setHours(11);
+            next.setMinutes(0);
+            next.setSeconds(0);
+            
+            if (now.getHours() >= 11) {
+                next.setDate(next.getDate() + 1);
+            }
+            
+            const timeUntil = next - now;
+            const hoursUntil = Math.floor(timeUntil / (1000 * 60 * 60));
+            const minutesUntil = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
+            
+            document.getElementById('nextUpdate').textContent = 
+                `Next WhatsApp update in ${hoursUntil}h ${minutesUntil}m`;
+        }
+
+        function updateCountdown() {
+            const targetDate = new Date('2025-02-15T00:00:00+05:30');
+            const now = new Date();
+            const timeRemaining = targetDate - now;
+
+            const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+            // Store old values for animation
+            const oldDays = document.getElementById('days').textContent;
+            const oldHours = document.getElementById('hours').textContent;
+            const oldMinutes = document.getElementById('minutes').textContent;
+            const oldSeconds = document.getElementById('seconds').textContent;
+
+            // Update values
+            document.getElementById('days').textContent = days;
+            document.getElementById('hours').textContent = hours;
+            document.getElementById('minutes').textContent = minutes;
+            document.getElementById('seconds').textContent = seconds;
+
+            // Add pulse animation if values changed
+            addPulseAnimation('days', days, oldDays);
+            addPulseAnimation('hours', hours, oldHours);
+            addPulseAnimation('minutes', minutes, oldMinutes);
+            addPulseAnimation('seconds', seconds, oldSeconds);
+        }
+
+        // Update countdown every second
+        setInterval(updateCountdown, 1000);
+        // Update next message time every minute
+        setInterval(updateNextMessageTime, 60000);
+        
+        // Initial updates
+        updateCountdown();
+        updateNextMessageTime();
+    </script>
+</body>
+</html>
+    
