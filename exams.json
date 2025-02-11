@@ -1,0 +1,34 @@
+{
+    "exams": [
+    {
+        "subject": "English",
+        "date": "2025-02-15",
+        "time": "10:30"
+      },
+      {
+        "subject": "Science",
+        "date": "2025-02-20",
+        "time": "10:30"
+      },
+      {
+        "subject": "Social Science",
+        "date": "2025-02-25",
+        "time": "10:30"
+      },
+      {
+        "subject": "Hindi",
+        "date": "2025-02-28",
+        "time": "10:30"
+      },
+      {
+        "subject": "Maths",
+        "date": "2025-03-10",
+        "time": "10:30"
+      },
+      {
+        "subject": "AI",
+        "date": "2025-03-18",
+        "time": "10:30"
+      } 
+    ]
+  }
