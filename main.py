@@ -2,8 +2,9 @@ import pywhatkit as kit
 import datetime
 import time
 import pytz
+import json
 from datetime import date
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 # Required packages:
 # pip install pywhatkit
@@ -12,12 +13,78 @@ from typing import Dict, List
 # Store targets in a dictionary
 TARGETS = {
     "groups": [
-        
+
     ],
     "numbers": [
 
     ]
 }
+
+# Define the structure for exam data
+class Exam:
+    def __init__(self, subject: str, date: str, time: str = "10:30"):
+        self.subject = subject
+        self.date = datetime.datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+
+def load_exams(filename: str = "exams.json") -> List[Exam]:
+    """Load exam schedule from JSON file"""
+    try:
+        with open(filename, 'r') as f:
+            data = json.load(f)
+            exams = []
+            for exam in data['exams']:
+                exams.append(Exam(
+                    subject=exam['subject'],
+                    date=exam['date'],
+                    time=exam.get('time', '10:30')  # Default to 10:30 if not specified
+                ))
+            return sorted(exams, key=lambda x: x.date)
+    except FileNotFoundError:
+        print(f"\n❌ Exam schedule file '{filename}' not found!")
+        return []
+    except json.JSONDecodeError:
+        print(f"\n❌ Invalid JSON format in '{filename}'!")
+        return []
+
+def get_next_exam(exams: List[Exam]) -> Optional[Exam]:
+    """Get the next upcoming exam"""
+    IST = pytz.timezone('Asia/Kolkata')
+    now = datetime.datetime.now(IST)
+    
+    upcoming_exams = [exam for exam in exams if exam.date.replace(tzinfo=IST) > now]
+    return upcoming_exams[0] if upcoming_exams else None
+
+def calculate_time_until_exam(exam: Exam) -> Dict[str, int]:
+    """Calculate time remaining until the exam"""
+    IST = pytz.timezone('Asia/Kolkata')
+    now = datetime.datetime.now(IST)
+    exam_time = exam.date.replace(tzinfo=IST)
+    diff = exam_time - now
+    
+    return {
+        'days': diff.days,
+        'hours': diff.seconds // 3600,
+        'minutes': (diff.seconds % 3600) // 60,
+    }
+
+def format_message(exam: Optional[Exam] = None) -> str:
+    """Format message with exam details and countdown"""
+    if not exam:
+        return "No upcoming exams scheduled! 🎉"
+    
+    time_left = calculate_time_until_exam(exam)
+    
+    message = (
+        f"📚 *COUNTDOWN TO {exam.subject} EXAM*\n"
+        "Time Remaining:\n"
+        "===================\n"
+        f"📅 *Days:* {time_left['days']}\n"
+        f"⏰ *Hours:* {time_left['hours']}\n"
+        f"⌚ *Minutes:* {time_left['minutes']}\n"
+        "===================\n"
+    )
+    
+    return message
 
 def validate_targets() -> bool:
     """Validate stored targets"""
@@ -35,40 +102,9 @@ def validate_targets() -> bool:
     
     return True
 
-def calculate_time_until_target() -> Dict[str, int]:
-    IST = pytz.timezone('Asia/Kolkata')
-    now = datetime.datetime.now(IST)
-    target_date = datetime.datetime(2025, 2, 15, tzinfo=IST)
-    diff = target_date - now
-    
-    return {
-        'days': diff.days,
-        'hours': diff.seconds // 3600,
-        'minutes': (diff.seconds % 3600) // 60,
-        
-    }
-
-def format_message() -> str:
-    time_left = calculate_time_until_target()
-    
-    message = (
-        "🎯 *COUNTDOWN TO Boards - FEBRUARY 15, 2025*\n\n"
-        "Time Remaining:\n"
-        "===================\n"
-        f"📅 *Days:* {time_left['days']}\n"
-        f"⏰ *Hours:* {time_left['hours']}\n"
-        f"⌚ *Minutes:* {time_left['minutes']}\n"
-        
-        "===================\n"
-        " ☠ "
-    )
-    
-    return message
-
-def send_to_number(phone_number: str) -> bool:
+def send_to_number(phone_number: str, message: str) -> bool:
     """Send message to individual number"""
     try:
-        message = format_message()
         if not phone_number.startswith("91"):
             phone_number = "91" + phone_number
             
@@ -84,10 +120,9 @@ def send_to_number(phone_number: str) -> bool:
         print(f"❌ Failed to send to {phone_number}: {str(e)}")
         return False
 
-def send_to_group(group_id: str) -> bool:
+def send_to_group(group_id: str, message: str) -> bool:
     """Send message to group"""
     try:
-        message = format_message()
         kit.sendwhatmsg_to_group_instantly(
             group_id=group_id,
             message=message,
@@ -100,7 +135,7 @@ def send_to_group(group_id: str) -> bool:
         print(f"❌ Failed to send to group {group_id}: {str(e)}")
         return False
 
-def send_all_messages() -> Dict[str, List[str]]:
+def send_all_messages(message: str) -> Dict[str, List[str]]:
     """Send messages to all configured targets"""
     results = {
         "successful": [],
@@ -109,7 +144,7 @@ def send_all_messages() -> Dict[str, List[str]]:
     
     # Send to groups
     for group_id in TARGETS["groups"]:
-        if send_to_group(group_id):
+        if send_to_group(group_id, message):
             results["successful"].append(f"Group: {group_id}")
         else:
             results["failed"].append(f"Group: {group_id}")
@@ -117,7 +152,7 @@ def send_all_messages() -> Dict[str, List[str]]:
     
     # Send to numbers
     for number in TARGETS["numbers"]:
-        if send_to_number(number):
+        if send_to_number(number, message):
             results["successful"].append(f"Number: {number}")
         else:
             results["failed"].append(f"Number: {number}")
@@ -167,18 +202,29 @@ def setup_targets() -> None:
 
 def run_reminder_service():
     IST = pytz.timezone('Asia/Kolkata')
+    exams = load_exams()
+    
+    if not exams:
+        print("\n❌ No exams loaded! Please check your exams.json file.")
+        return
     
     print("\n" + "="*50)
-    print("📱 WhatsApp Multi-Target Reminder Service")
+    print("📱 WhatsApp Exam Reminder Service")
     print("="*50)
     print("\n📍 Time Zone: Indian Standard Time (IST)")
-    print("⏰ Scheduled Time: 11:00 AM IST")
+    print("⏰ Daily Update Time: 11:00 AM IST")
+    print("\n📚 Loaded Exams:")
+    for exam in exams:
+        print(f"   • {exam.subject}: {exam.date.strftime('%B %d, %Y at %I:%M %p')}")
+    
     print("\n🎯 Configured Targets:")
     print(f"   • Groups: {len(TARGETS['groups'])}")
     print(f"   • Numbers: {len(TARGETS['numbers'])}")
     
     print("\n✨ Sending initial messages...")
-    results = send_all_messages()
+    next_exam = get_next_exam(exams)
+    message = format_message(next_exam)
+    results = send_all_messages(message)
     print_status(results)
     
     while True:
@@ -186,18 +232,20 @@ def run_reminder_service():
         
         if now.hour == 11 and now.minute == 0:
             print("\n🕋 It's 11:00 AM! Sending scheduled messages...")
-            results = send_all_messages()
+            next_exam = get_next_exam(exams)
+            message = format_message(next_exam)
+            results = send_all_messages(message)
             print_status(results)
             time.sleep(60)
         
         time.sleep(30)
 
 if __name__ == "__main__":
-    print("\n🚀 WhatsApp Multi-Target Reminder Setup")
+    print("\n🚀 WhatsApp Exam Reminder Setup")
     print("=" * 50)
     
     # Interactive setup
-    setup_targets()
+    #setup_targets()
     
     # Validate configuration
     if not validate_targets():
