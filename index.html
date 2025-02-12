@@ -1,8 +1,7 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Countdown to 15 Feb 2025</title>
+    <title>Exam Countdown</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,10 +50,32 @@
             color: rgba(255, 255, 255, 0.8);
             font-size: 0.9rem;
         }
-        .next-update {
+        .exam-info {
             margin-top: 1rem;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .exam-list {
+            margin-top: 2rem;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .exam-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .exam-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .exam-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
         }
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -68,7 +89,8 @@
 </head>
 <body>
     <div class="countdown">
-        <h1>Countdown to 15 Feb 2025</h1>
+        <h1 id="examTitle">Loading...</h1>
+        <div class="exam-info" id="examInfo"></div>
         <div class="time-unit">
             <div class="number" id="days">0</div>
             <div class="label">days</div>
@@ -86,10 +108,70 @@
             <div class="label">seconds</div>
         </div>
         <div class="timezone">Indian Standard Time (IST)</div>
-        
+        <div class="exam-list" id="examList"></div>
     </div>
 
     <script>
+        let exams = [];
+        let currentExamIndex = 0;
+
+        // Load exam data from JSON
+        async function loadExams() {
+            try {
+                const response = await fetch('exams.json');
+                const data = await response.json();
+                exams = data.exams.sort((a, b) => {
+                    return new Date(a.date + 'T' + (a.time || '10:30') + ':00+05:30') - 
+                           new Date(b.date + 'T' + (b.time || '10:30') + ':00+05:30');
+                });
+                updateExamList();
+                findNextExam();
+                updateCountdown();
+            } catch (error) {
+                console.error('Error loading exam data:', error);
+                document.getElementById('examTitle').textContent = 'Error loading exam data';
+            }
+        }
+
+        function updateExamList() {
+            const listElement = document.getElementById('examList');
+            listElement.innerHTML = '<h3>Upcoming Exams</h3>';
+            
+            exams.forEach((exam, index) => {
+                const examDate = new Date(exam.date + 'T' + (exam.time || '10:30') + ':00+05:30');
+                if (examDate > new Date()) {
+                    const div = document.createElement('div');
+                    div.className = `exam-item ${index === currentExamIndex ? 'active' : ''}`;
+                    div.textContent = `${exam.subject} - ${examDate.toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                    })} at ${exam.time || '10:30'} AM`;
+                    div.onclick = () => selectExam(index);
+                    listElement.appendChild(div);
+                }
+            });
+        }
+
+        function findNextExam() {
+            const now = new Date();
+            currentExamIndex = exams.findIndex(exam => {
+                const examDate = new Date(exam.date + 'T' + (exam.time || '10:30') + ':00+05:30');
+                return examDate > now;
+            });
+            
+            if (currentExamIndex === -1) {
+                currentExamIndex = 0; // Default to first exam if all are past
+            }
+            updateExamList();
+        }
+
+        function selectExam(index) {
+            currentExamIndex = index;
+            updateExamList();
+            updateCountdown();
+        }
+
         function addPulseAnimation(elementId, newValue, oldValue) {
             if (newValue !== oldValue) {
                 const element = document.getElementById(elementId).parentElement;
@@ -100,13 +182,24 @@
             }
         }
 
-        
-
         function updateCountdown() {
-            const targetDate = new Date('2025-02-15T00:00:00+05:30');
+            if (!exams.length || currentExamIndex === -1) return;
+
+            const exam = exams[currentExamIndex];
+            const targetDate = new Date(exam.date + 'T' + (exam.time || '10:30') + ':00+05:30');
             const now = new Date();
             const timeRemaining = targetDate - now;
 
+            // Update title and info
+            document.getElementById('examTitle').textContent = `Countdown to ${exam.subject} Exam`;
+            document.getElementById('examInfo').textContent = 
+                `${targetDate.toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                })} at ${exam.time || '10:30'} AM`;
+
+            // Calculate time units
             const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
             const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
@@ -119,27 +212,28 @@
             const oldSeconds = document.getElementById('seconds').textContent;
 
             // Update values
-            document.getElementById('days').textContent = days;
-            document.getElementById('hours').textContent = hours;
-            document.getElementById('minutes').textContent = minutes;
-            document.getElementById('seconds').textContent = seconds;
+            document.getElementById('days').textContent = Math.max(0, days);
+            document.getElementById('hours').textContent = Math.max(0, hours);
+            document.getElementById('minutes').textContent = Math.max(0, minutes);
+            document.getElementById('seconds').textContent = Math.max(0, seconds);
 
             // Add pulse animation if values changed
             addPulseAnimation('days', days, oldDays);
             addPulseAnimation('hours', hours, oldHours);
             addPulseAnimation('minutes', minutes, oldMinutes);
             addPulseAnimation('seconds', seconds, oldSeconds);
+
+            // Check if current exam is past and we should move to next
+            if (timeRemaining < 0) {
+                findNextExam();
+            }
         }
+
+        // Load exams when page loads
+        loadExams();
 
         // Update countdown every second
         setInterval(updateCountdown, 1000);
-        // Update next message time every minute
-        setInterval(updateNextMessageTime, 60000);
-        
-        // Initial updates
-        updateCountdown();
-        updateNextMessageTime();
     </script>
 </body>
 </html>
-    
