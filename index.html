@@ -12,10 +12,184 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             background: black;
             color: white;
+            gap: 2rem;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .container {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 1400px;
+            width: 100%;
+        }
+        .timer-panel {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            width: 280px;
+            max-width: 100%;
+        }
+        .timer-panel h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .timer-display {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 1.5rem 0;
+            color: #4CAF50;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .timer-display.running {
+            color: #FFC107;
+        }
+        .timer-display.finished {
+            color: #F44336;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        .timer-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .timer-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'StyreneA-Medium', sans-serif;
+        }
+        .timer-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .timer-btn:active {
+            transform: translateY(0);
+        }
+        .timer-btn.primary {
+            background: #4CAF50;
+        }
+        .timer-btn.primary:hover {
+            background: #45a049;
+        }
+        .timer-btn.danger {
+            background: #F44336;
+        }
+        .timer-btn.danger:hover {
+            background: #da190b;
+        }
+        .custom-input {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .custom-input input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.8rem;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-family: 'StyreneA-Medium', sans-serif;
+        }
+        .custom-input input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .custom-input input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            .container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .timer-panel {
+                width: 100%;
+                max-width: 400px;
+                padding: 1.5rem;
+            }
+            .timer-panel h2 {
+                font-size: 1.3rem;
+            }
+            .timer-display {
+                font-size: 2.5rem;
+            }
+            .countdown {
+                width: 100%;
+                max-width: 500px;
+                padding: 1.5rem;
+            }
+            .time-unit {
+                margin: 0.5rem;
+                padding: 1rem;
+                min-width: 80px;
+            }
+            .number {
+                font-size: 2rem;
+            }
+            .label {
+                font-size: 0.8rem;
+            }
+            .countdown h1 {
+                font-size: 1.3rem;
+            }
+            .exam-info {
+                font-size: 1rem;
+            }
+            footer {
+                position: relative !important;
+                padding: 2rem !important;
+                text-align: center;
+                width: 100%;
+            }
+        }
+        @media (max-width: 480px) {
+            .timer-panel {
+                padding: 1rem;
+            }
+            .timer-display {
+                font-size: 2rem;
+            }
+            .timer-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            .time-unit {
+                margin: 0.3rem;
+                padding: 0.8rem;
+                min-width: 60px;
+            }
+            .number {
+                font-size: 1.5rem;
+            }
+            .label {
+                font-size: 0.7rem;
+            }
         }
         .countdown {
             text-align: center;
@@ -92,7 +266,23 @@
     </style>
 </head>
 <body>
-    <div class="countdown">
+    <div class="container">
+        <!-- Productivity Timer Panel -->
+        <div class="timer-panel">
+            <h2>⏱️ Productivity Timer</h2>
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            <div class="timer-buttons">
+                <button class="timer-btn primary" onclick="startTimer(45)">45 Minutes</button>
+                <button class="timer-btn primary" onclick="startTimer(15)">15 Minutes</button>
+                <div class="custom-input">
+                    <input type="number" id="customMinutes" placeholder="Minutes" min="1" max="999">
+                    <button class="timer-btn primary" onclick="startCustomTimer()" style="flex-shrink: 0;">Start</button>
+                </div>
+                <button class="timer-btn danger" onclick="stopTimer()">Stop/Reset</button>
+            </div>
+        </div>
+
+        <div class="countdown">
         <h1 id="examTitle">Loading...</h1>
         <div class="exam-info" id="examInfo"></div>
         <div class="time-unit">
@@ -114,8 +304,9 @@
         <div class="timezone">Indian Standard Time (IST)</div>
         <div class="exam-list" id="examList"></div>
     </div>
+    </div>
     <footer style="position: fixed; bottom: 0; align-items: center; padding: 4rem; text-decoration: none; ">
-        Made with ❤️ by <a href="https://github.com/NipunD58" target="_blank" style="color: white;">Nipun</a>
+        Made by <a href="https://github.com/NipunD58" target="_blank" style="color: white;">Nipun</a>
     </footer>
     <script>
         let exams = [];
@@ -240,6 +431,108 @@
 
         // Update countdown every second
         setInterval(updateCountdown, 1000);
+
+        // ====== PRODUCTIVITY TIMER ======
+        let timerInterval = null;
+        let timerEndTime = null;
+        let timerAudio = null;
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer(minutes) {
+            stopTimer(); // Clear any existing timer
+            
+            const display = document.getElementById('timerDisplay');
+            timerEndTime = Date.now() + (minutes * 60 * 1000);
+            
+            display.classList.remove('finished');
+            display.classList.add('running');
+            
+            timerInterval = setInterval(() => {
+                const remaining = Math.max(0, Math.floor((timerEndTime - Date.now()) / 1000));
+                display.textContent = formatTime(remaining);
+                
+                if (remaining <= 0) {
+                    display.classList.remove('running');
+                    display.classList.add('finished');
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    
+                    // Play notification sound (beep)
+                    playTimerSound();
+                    
+                    // Show browser notification if permitted
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('Timer Finished!', {
+                            body: `Your ${minutes} minute timer has ended.`,
+                            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">⏰</text></svg>'
+                        });
+                    }
+                }
+            }, 100); // Update more frequently for smoother display
+        }
+
+        function startCustomTimer() {
+            const input = document.getElementById('customMinutes');
+            const minutes = parseInt(input.value);
+            
+            if (minutes && minutes > 0 && minutes <= 999) {
+                startTimer(minutes);
+                input.value = '';
+            } else {
+                alert('Please enter a valid number of minutes (1-999)');
+            }
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            const display = document.getElementById('timerDisplay');
+            display.textContent = '00:00';
+            display.classList.remove('running', 'finished');
+        }
+
+        function playTimerSound() {
+            // Create a simple beep sound using Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // Request notification permission on page load
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Allow Enter key to start custom timer
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('customMinutes');
+            if (input) {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        startCustomTimer();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
