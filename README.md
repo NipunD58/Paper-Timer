@@ -1,2 +1,2 @@
 # Paper-Timer
-A basic timer that tells you how your exams are.
+A basic timer that tells you how far your exams are.
