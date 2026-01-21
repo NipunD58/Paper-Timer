@@ -1,6 +1,36 @@
 {
     "exams": [
     {
+        "subject": "Physics",
+        "date": "2026-02-23",
+        "time": "09:00"
+      },
+    {
+        "subject": "Chemistry",
+        "date": "2026-02-26",
+        "time": "09:00"
+      },
+    {
+        "subject": "Maths",
+        "date": "2026-03-05",
+        "time": "09:00"
+      },
+    {
+        "subject": "English",
+        "date": "2026-03-10",
+        "time": "09:00"
+      },
+    {
+        "subject": "AI/CS",
+        "date": "2026-03-13",
+        "time": "09:00"
+      },
+    {
+        "subject": "Additional Subject",
+        "date": "2026-03-16",
+        "time": "09:00"
+      },
+    {
         "subject": "JEE Mains 2027 Jan Attempt",
         "date": "2027-01-21",
         "time": "09:00"
